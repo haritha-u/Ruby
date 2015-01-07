@@ -1,1 +1,2 @@
 # histogram
+puts "hello"
