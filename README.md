@@ -1,2 +1,0 @@
-# histogram
-puts "hello"
