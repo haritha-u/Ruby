@@ -1,0 +1,349 @@
+1. Call back methods in modules:
+   Included: This method is invoked whenever the module is included in another module or class.
+     Ex: module A
+           def A.included(mod)
+             puts "#{self} included in #{mod}"
+           end
+         end
+         module B
+           include A
+         end
+         => "A included in B"
+
+   Extended: This method is invoked whenever a module is extended in another module or class.
+     Ex: module A
+           def self.extended(mod)
+             puts "#{self} extended in #{mod}"
+           end
+         end
+         module B
+           extend A
+         end
+         => "A extended in B"
+   
+   Method_added: This method is invoked whenever a instance method is added to the receiver
+     Ex: module C
+           def self.method_added(method_name)
+             puts "Adding #{method_name.inspect}"
+           end
+         def instancemethod()
+           puts "hi"
+         end
+         end
+         => "Adding instancemethod"
+   Method_removed: This method is called when an instance method is removed from the reciever
+     Ex: module C
+           def self.method_removed(method_name)
+             puts "Removing #{method_name.inspect}"
+           end
+           def instance-method() end
+           remove_method :instance-method
+         end
+         => "Removing :instance_method"
+
+2. Class Instance Variables: 
+      These variables are instance variables declared with in the class just like class varaibles, these variables are called class instance varibles. These are accessed within class methods only. These are not accessed in instance methods and subclasses also. These variables are not accessed with objects also.
+
+  Ex: For class instance variables are not accessed with object 
+        class A
+          @a = 10
+          attr_accessor :a
+        end
+        a = A.new
+        a.a
+        => nil 
+      
+  Ex: variables not available in instance methods and available only for class methods
+        class B
+          attr_accessor :a
+          @a = 10
+          def display
+            puts @a
+          end
+          def self.display1
+            puts @a
+          end
+        end
+        b = B.new
+        b.display  => nil
+        B.display1 => 10
+      
+  Ex: variables not available for child classes   
+        class A
+          @a = 20
+        end
+        class B < A
+          puts @a
+        end
+        => nill
+
+3. Send:
+   send() is an instance method of the Object class. The first arguement() is the message that we are sending to the object i.e the name of a method. We can use a 'string' or a 'symbol'.
+   Ex: class A
+         def method
+           puts "hello"
+         end
+       end
+      obj = A.new
+      obj.send("method") => "hello"         
+
+  We can call private and protected methods by using send method.
+    Ex: class A
+          private
+          def private_method
+            puts "Calling private method"
+          end
+          protected
+          def protected_method
+            puts "calling protected method"
+          end
+        end
+        obj = A.new
+        obj.send(:private_method)
+        obj.send("protected_method")
+
+4. Super is a keyword used to calls methods of parent class, if it exists. We can use super keywords in three ways. They are:
+   super: It will call parent class method with arguments if argument are there in child class
+   Ex: class A
+         def method(a, b)
+           puts "a is #{a}, b is #{b}"
+         end
+       end
+       class B < A
+         def method(c, d)
+           super
+         end
+       end
+       obj = B.new
+       obj.method(10,20)
+       => "a is 10, b is 20"
+   super will take the argument which we passed to the parent class method.
+   super(arguments): It will call parent class method with given arguments.
+   Ex: class A
+         def method(a, b)
+           puts "a is #{a}, b is #{b}"
+         end
+       end
+       class B < A
+         def method(c, d)
+           i = c + 2
+           j = d + 2
+           super(i,j)
+         end
+       end
+       obj = B.new
+       obj.method(10,20)
+       => "a is 12, b is 22"
+   super(): It will call parent class method with empty arguments even though child class method has arguments.
+   Ex: class A
+         def method(a, b)
+           puts "a is #{a}, b is #{b}"
+         end
+       end
+       class B < A
+         def method(c, d)
+           super()
+         end
+       end
+       obj = B.new
+       obj.method(10,20)
+       => This will show ArgumentError
+when we want to call methods in loop.
+  Ex: class A
+        def method1
+          puts "hello"
+        end
+        def method2
+          puts "welcome"
+        end
+      end
+      a = A.new 
+      [:method1,:method2].each{|meth| a.send(meth)}
+      => "hello"
+         "welcome"
+
+5. Block: 
+   It is a piece of code that can't be stored in a varaible or object. We have two types of blocks, they are do end block and {} end. In block do, end has lower precednce than {}. In Ruby block is not an object and it will not executed automatically until we call
+       
+   Ex: def add(n)
+         puts "#{n} + 10 = #{n + 10}"
+       end
+       def b(method)
+         1.upto(9) do |i|
+           add(i)
+         end
+       end
+       b(add(0))
+       => 0 + 10 = 10
+            .
+            .
+            .
+            .
+          9 + 10 = 19
+            
+        BLOCK will never be executed until it is called
+        
+   Ex: def a(name)
+         puts "Hi, #{name}"
+       end 
+       a("mom") do 
+         puts "hello"
+       end 
+       => Hi, mom
+
+6. Binding:
+   variables, methods, value of self and an iterator block are all retained through binding, these objects are created using kernel #binding and are available to other functions. Binding objects are passed as 2nd argument. 
+        
+Different scenario of binding the variable's in class, instance methods etc
+  Ex:  class A
+          def initialize(a)
+            @a = a
+          end
+          def b
+            @b = 20
+          end
+          
+          def get_binding
+            return binding()
+          end
+          
+        end
+        a = A.new(10)
+        b =  a.get_binding              # Here binding the variables
+        eval("@a", b)
+        => 10
+
+        b.b                             # Throws Error
+        b.a                             #  Throws Error
+        
+        eval("@b", b)
+        => 20
+        
+        eval("@c", b)
+        => nil
+        
+        k2 = A.new(99)                 #Another object for A class
+        
+        c = k2.get_binding
+        
+        eval("@b", c)
+        => nil
+        
+        k2.b
+        => 20
+        
+        eval("@b", c)
+        => 20
+        
+Class instance variables will never be binded
+  Ex: class A
+        @a = 20
+        @@b = 30    
+        def initialize(c)
+          @c = c
+          d = 20
+        end     
+        def demo(e)
+          @@e = e
+          @h = 23
+        end     
+        LO = 10
+        $i = 99        
+        def get_binding
+          return binding()
+        end     
+      end    
+      a = A.new(888)
+      k1 = a.get_binding     
+      eval("$i", k1)
+      => 99   
+      eval("Lo", k1)
+      => 10   
+      eval("@a", k1)
+      => nil   
+       eval("@@b", k1)
+       => 30  
+       eval("@c", k1)
+       => 888  
+       eval("d", k1)              => # Throws an error
+       eval("@@e", k1)            => # Uninitialized class
+       a.demo(78)
+       eval("@@e", k1)
+       => 78
+
+7. Methodlookup:
+   When you call a method, Ruby does two things:
+     --It finds the method. This is a process called method lookup.
+     -- It executes the method. To do that, Ruby needs something called self.
+
+Method Lookup
+--When we call a method, Ruby looks into the object's class and finds the method there.
+
+Then imagine moving from the class into its superclass, then into the superclass's superclass, and so on until you reach Object (the default superclass) and then, finally, BasicObject (the root of the Ruby class hierarchy). 
+The path of classes you just traversed is called the "ancestors chain" of the class (the ancestors chain also includes modules).
+
+--Therefore, to find a method, Ruby goes in the receiver's class, and from there it climbs the ancestors chain until it finds the method.
+--When you include a module in a class (or even in another module), Ruby creates an anonymous class that wraps the module, and inserts the anonymous class in the chain, just above the including class itself.
+
+Include and prepend module both are same but differnt lies in the output and based on its ancestors
+  Ex: class Anilmal
+        def initialize(name)
+          @name = name
+        end
+       
+        def info
+          puts "I'm a #{self.class}"
+          puts "my name is #{@name}"
+        end
+      end
+     
+      class Dog < Animal
+        def info
+          puts "I #{make_noise}"
+          super
+        end
+       
+        def make_noise
+          'bark'
+        end
+      end
+   
+      module Mamal
+        def info
+          puts "I am mamal"
+          super
+        end
+      end
+  
+#When i am including module as prepend in class
+     
+     class Dog
+       prepend Mamal
+     end   
+     lassie = Dog.new "Lassie"
+     lassie.info
+     => 
+       I'm a mamal
+       I bark
+       I'm a Dog
+       my name is 'Lassie'
+     
+#Output will be based upon this pattern
+     Dog.ancestors
+     => [mamal,Dog,Animal,obj,kernel,basic object]
+     
+#when i Include the module the output will be 
+     class Dog
+       include Mamal
+     end
+       
+     lassie.info  
+     =>   
+       I bark
+       I'm mamal
+       I'm a Dog
+       my name is Lassie
+       
+     Dog.ancestors
+     => [Dog,mamal,Animal,Object,Kernel,Basic Object]
+
